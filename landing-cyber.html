@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑左AI · Ozon智能选品系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cyber-blue: #00d4ff;
+            --ice-blue: #00f5ff;
+            --electric-cyan: #22d3ee;
+            --deep-purple: #8b5cf6;
+            --dark-bg: #050816;
+            --card-bg: rgba(15, 23, 42, 0.6);
+            --grid-color: rgba(0, 212, 255, 0.05);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-glow: rgba(0, 212, 255, 0.3);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', 'Microsoft Yahei', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* 鼠标跟随光斑 */
+        .cursor-glow {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: screen;
+            transition: opacity 0.3s ease;
+        }
+
+        /* 粒子背景 Canvas */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 网格背景 */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.6;
+        }
+
+        /* 渐变光晕装饰 */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-1 {
+            background: radial-gradient(circle, var(--cyber-blue) 0%, transparent 70%);
+            top: -200px;
+            right: -100px;
+            animation: glowFloat 10s ease-in-out infinite;
+        }
+
+        .glow-2 {
+            background: radial-gradient(circle, var(--deep-purple) 0%, transparent 70%);
+            bottom: -100px;
+            left: -200px;
+            animation: glowFloat 12s ease-in-out infinite reverse;
+        }
+
+        @keyframes glowFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            50% { transform: translate(50px, -50px) scale(1.1); opacity: 0.4; }
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 头部导航 */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 20px 0;
+            transition: all 0.4s ease;
+        }
+
+        header.scrolled {
+            background: rgba(5, 8, 22, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .logo:hover::before {
+            opacity: 1;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .logo:hover .logo-icon::before {
+            left: 100%;
+        }
+
+        .logo-icon span {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--ice-blue), var(--deep-purple));
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textShine 3s linear infinite;
+        }
+
+        @keyframes textShine {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-menu a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            letter-spacing: 1px;
+            position: relative;
+            padding: 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--cyber-blue), var(--deep-purple));
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyber-blue), transparent);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-menu a:hover {
+            color: var(--cyber-blue);
+        }
+
+        .nav-menu a:hover::before,
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border-radius: 8px;
+            background: transparent;
+            border: 1px solid var(--cyber-blue);
+            color: var(--cyber-blue);
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .nav-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            transition: left 0.4s ease;
+            z-index: -1;
+        }
+
+        .nav-cta:hover {
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+        }
+
+        .nav-cta:hover::before {
+            left: 0;
+        }
+
+        /* 首屏 */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 60px 0;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeUp 1s ease forwards 0.3s;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 50px;
+            background: rgba(0, 212, 255, 0.05);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+            animation: badgeShine 3s linear infinite;
+        }
+
+        @keyframes badgeShine {
+            to { left: 150%; }
+        }
+
+        .badge-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--cyber-blue);
+            box-shadow: 0 0 20px var(--cyber-blue);
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px var(--cyber-blue); transform: scale(1); }
+            50% { box-shadow: 0 0 25px var(--cyber-blue), 0 0 40px var(--cyber-blue); transform: scale(1.2); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); 
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 30px rgba(139, 92, 246, 0.3); 
+            }
+        }
+
+        .hero-badge span {
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--cyber-blue);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--cyber-blue), var(--ice-blue), var(--deep-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero h1 .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyber-blue), var(--deep-purple));
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 600px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 60px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 36px;
+            border-radius: 8px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-secondary:hover {
+            border-color: transparent;
+            color: white;
+            transform: translateY(-4px);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary:hover::before {
+            opacity: 1;
+        }
+
+        /* 统计数据 */
+        .hero-stats {
+            display: flex;
+            gap: 60px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        /* 预约提示横幅 */
+        .promo-banner {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 16px;
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .promo-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+            animation: badgeShine 3s linear infinite;
+        }
+
+        .promo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            border-radius: 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: white;
+            position: relative;
+            z-index: 1;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .promo-text {
+            font-size: 17px;
+            color: var(--text-primary);
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .promo-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-decoration: none;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .promo-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .promo-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .promo-btn:hover::before {
+            left: 100%;
+        }
+
+        .stat-item {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .stat-item.visible {
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', monospace;
+            font-size: 42px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--ice-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            display: inline-block;
+        }
+
+        .stat-number::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--cyber-blue), transparent);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* 通用 Section 样式 */
+        .section {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 80px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .section-header.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--cyber-blue);
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .section-title span {
+            background: linear-gradient(135deg, var(--cyber-blue), var(--ice-blue), var(--deep-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* 功能卡片网格 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 36px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .feature-card.visible {
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyber-blue), var(--deep-purple), transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 212, 255, 0.1), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--cyber-blue);
+            box-shadow: 0 20px 60px rgba(0, 212, 255, 0.15),
+                        inset 0 0 40px rgba(0, 212, 255, 0.05);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-card:hover::after {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 产品介绍 */
+        .intro-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .intro-card.visible {
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .intro-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), transparent 60%);
+            pointer-events: none;
+        }
+
+        .intro-card p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 2;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 视频演示 */
+        .demo-section {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .demo-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 60px;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .demo-card.visible {
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        /* 视频标签页 */
+        .video-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .video-tab {
+            padding: 12px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-secondary);
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .video-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            transition: left 0.4s ease;
+            z-index: -1;
+        }
+
+        .video-tab:hover {
+            border-color: var(--cyber-blue);
+            color: var(--cyber-blue);
+        }
+
+        .video-tab.active {
+            color: white;
+            border-color: transparent;
+        }
+
+        .video-tab.active::before {
+            left: 0;
+        }
+
+        .video-tab-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.2);
+            margin-right: 8px;
+            font-size: 11px;
+        }
+
+        .video-tab.active .video-tab-number {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 视频内容区域 */
+        .video-content {
+            display: none;
+        }
+
+        .video-content.active {
+            display: block;
+        }
+
+        .video-container {
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .video-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 1px solid transparent;
+            border-image: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple)) 1;
+            border-radius: 16px;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .video-container video {
+            width: 100%;
+            display: block;
+        }
+
+        .video-title {
+            text-align: center;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--cyber-blue);
+        }
+
+        .video-desc {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* 额外视频区域 */
+        .extra-videos {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .extra-videos-title {
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--deep-purple);
+            margin-bottom: 32px;
+        }
+
+        .extra-videos-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .extra-video-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .extra-video-card:hover {
+            border-color: var(--cyber-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .extra-video-container {
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            margin-bottom: 16px;
+        }
+
+        .extra-video-container video {
+            width: 100%;
+            display: block;
+        }
+
+        .extra-video-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .extra-video-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 待开发功能样式 */
+        .upcoming-feature {
+            text-align: center;
+        }
+
+        .upcoming-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(0, 212, 255, 0.2));
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 30px;
+            color: var(--deep-purple);
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .upcoming-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .upcoming-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        /* 预览界面样式 */
+        .preview-mockup {
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(15, 23, 42, 0.8));
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.1),
+                        inset 0 0 60px rgba(139, 92, 246, 0.05);
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.1), rgba(139, 92, 246, 0.1));
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .mockup-dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #eab308; }
+        .dot.green { background: #22c55e; }
+
+        .mockup-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .mockup-status .status-badge {
+            padding: 4px 12px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--cyber-blue);
+        }
+
+        .mockup-body {
+            display: flex;
+            min-height: 500px;
+        }
+
+        .mockup-sidebar {
+            width: 220px;
+            background: rgba(15, 23, 42, 0.9);
+            border-right: 1px solid rgba(0, 212, 255, 0.15);
+            padding: 20px 0;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(0, 212, 255, 0.05);
+            color: var(--cyber-blue);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.2), transparent);
+            color: var(--cyber-blue);
+            border-left: 3px solid var(--cyber-blue);
+        }
+
+        .mockup-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .content-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .content-tab {
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .content-tab.active {
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            border-color: transparent;
+            color: white;
+        }
+
+        .content-body {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .finance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .finance-header h4 {
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .finance-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .btn-small {
+            padding: 6px 14px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+        }
+
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .stat-value.sales { color: #f59e0b; }
+        .stat-value.profit { color: #22c55e; }
+        .stat-value.orders { color: #3b82f6; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .dashboard-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+        }
+
+        .dashboard-card.success { border-color: rgba(34, 197, 94, 0.3); }
+        .dashboard-card.warning { border-color: rgba(239, 68, 68, 0.3); }
+        .dashboard-card.info { border-color: rgba(59, 130, 246, 0.3); }
+
+        .dashboard-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dashboard-card.success .card-header { color: #22c55e; }
+        .dashboard-card.warning .card-header { color: #ef4444; }
+        .dashboard-card.info .card-header { color: #3b82f6; }
+
+        .dashboard-card .card-body .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .dashboard-card .card-body .row.highlight {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .dashboard-card .card-body .row .text-blue {
+            color: #3b82f6;
+        }
+
+        .badge-small {
+            padding: 2px 8px;
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .badge-small.warning {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* 功能亮点 */
+        .feature-highlights {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .highlight-item {
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .highlight-item:hover {
+            transform: translateY(-4px);
+            border-color: var(--cyber-blue);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.1);
+        }
+
+        .highlight-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .highlight-item h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .highlight-item p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .upcoming-cta {
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .cta-text {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        /* 联系我们 */
+        .contact-section {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .contact-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 60px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .contact-card.visible {
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .contact-header {
+            margin-bottom: 40px;
+        }
+
+        .contact-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            border-color: var(--cyber-blue);
+            transform: translateX(8px);
+            background: rgba(0, 212, 255, 0.08);
+        }
+
+        .contact-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .contact-info {
+            text-align: left;
+        }
+
+        .contact-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+
+        .contact-value {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* 二维码样式 */
+        .qr-code-container {
+            margin: 32px 0;
+            padding: 24px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 12px;
+        }
+
+        .qr-code-wrapper {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 16px;
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+        }
+
+        .qr-code-image {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 4px;
+        }
+
+        .qr-code-hint {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* 底部 */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 40px 0;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        footer p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                gap: 20px;
+            }
+
+            .nav-menu a {
+                font-size: 13px;
+            }
+
+            .nav-cta {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+            }
+
+            .hero-stats {
+                gap: 40px;
+            }
+
+            .promo-banner {
+                padding: 20px 24px;
+            }
+
+            .promo-text {
+                font-size: 15px;
+            }
+
+            .section {
+                padding: 80px 0;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .intro-card,
+            .demo-card,
+            .contact-card {
+                padding: 32px;
+            }
+
+            /* 视频标签页响应式 */
+            .video-tabs {
+                gap: 8px;
+            }
+
+            .video-tab {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            .video-tab-number {
+                width: 20px;
+                height: 20px;
+                line-height: 20px;
+                font-size: 10px;
+            }
+
+            /* 额外视频网格响应式 */
+            .extra-videos-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .extra-video-card {
+                padding: 20px;
+            }
+
+            /* 待开发功能响应式 */
+            .feature-highlights {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .mockup-body {
+                flex-direction: column;
+            }
+
+            .mockup-sidebar {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+                padding: 10px;
+            }
+
+            .sidebar-item {
+                white-space: nowrap;
+                padding: 10px 14px;
+            }
+
+            .sidebar-item.active {
+                border-left: none;
+                border-bottom: 2px solid var(--cyber-blue);
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 鼠标跟随光斑 -->
+    <div class="cursor-glow" id="cursor-glow"></div>
+
+    <!-- 粒子背景 -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- 网格背景 -->
+    <div class="grid-bg"></div>
+
+    <!-- 渐变光晕 -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- 导航栏 -->
+    <header id="header">
+        <div class="container nav">
+            <div class="logo">
+                <div class="logo-icon"><span>HZ</span></div>
+                <span class="logo-text">黑左AI</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#intro">产品介绍</a>
+                <a href="#features">核心功能</a>
+                <a href="#demo">视频教程</a>
+                <a href="#upcoming">新功能预告</a>
+                <a href="#contact">联系我们</a>
+                <a href="#contact" class="nav-cta">
+                    <i class="fas fa-rocket"></i>
+                    <span>立即咨询</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 首屏 -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <div class="badge-pulse"></div>
+                    <span>OZON 跨 境 智 能 选 品 系 统</span>
+                </div>
+
+                <h1>
+                    黑左AI · <span class="highlight">智能选品平台</span>
+                </h1>
+
+                <p>
+                    集成AI数据分析、1688货源匹配、俄文Listing自动生成，一站式解决Ozon选品难题，让您的跨境电商事业如虎添翼
+                </p>
+
+                <div class="hero-actions">
+                    <a href="#contact" class="btn-primary">
+                        <i class="fas fa-play"></i>
+                        <span>开始使用</span>
+                    </a>
+                    <a href="#demo" class="btn-secondary">
+                        <i class="fas fa-play-circle"></i>
+                        <span>观看演示</span>
+                    </a>
+                </div>
+
+                <div class="hero-stats">
+                    <div class="stat-item" style="animation-delay: 0.6s;">
+                        <div class="stat-number">5,000+</div>
+                        <div class="stat-label">活跃卖家</div>
+                    </div>
+                    <div class="stat-item" style="animation-delay: 0.8s;">
+                        <div class="stat-number">98%</div>
+                        <div class="stat-label">用户满意度</div>
+                    </div>
+                    <div class="stat-item" style="animation-delay: 1.0s;">
+                        <div class="stat-number">10x</div>
+                        <div class="stat-label">效率提升</div>
+                    </div>
+                    <div class="stat-item" style="animation-delay: 1.2s;">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">全天候运行</div>
+                    </div>
+                </div>
+
+                <!-- 预约提示 -->
+                <div class="promo-banner" style="animation-delay: 1.4s;">
+                    <div class="promo-badge"><i class="fas fa-gift"></i> 限时福利</div>
+                    <p class="promo-text">现在预约可享受全自动化为您上架100个好品，体验名额有限，请联系客服领取</p>
+                    <a href="#contact" class="promo-btn">立即预约</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 产品介绍 -->
+    <section class="section" id="intro">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">PRODUCT INTRODUCTION</span>
+                <h2 class="section-title">产品<span>简介</span></h2>
+                <p class="section-subtitle">黑左AI是一款专业的Ozon跨境选品自动化解决方案</p>
+            </div>
+
+            <div class="intro-card" data-animate>
+                <p>
+                    黑左AI是专为Ozon跨境卖家打造的智能化选品工具，集成了AI数据分析、平台数据实时爬取、1688货源一键匹配、俄文文案智能生成、全流程自动化一站式上架等核心能力。我们帮助卖家快速挖掘高潜力爆款、降低选品试错成本、提升整体运营效率。无论是个人创业者还是小型跨境团队，都能通过黑左AI实现高效、稳定的跨境电商运营，让您专注于业务增长，而不是繁琐的手动操作。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 核心功能 -->
+    <section class="section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">CORE FEATURES</span>
+                <h2 class="section-title">核心<span>功能</span></h2>
+                <p class="section-subtitle">强大的功能矩阵，助力您的跨境电商事业腾飞</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card" data-animate style="animation-delay: 0.1s;">
+                    <div class="feature-icon"><i class="fas fa-fire"></i></div>
+                    <h3>OZON 爆款挖掘</h3>
+                    <p>【独家量化模型】实时监控平台热销品类与飙升商品，AI智能筛选低竞争、高潜力爆款，告别盲目铺货，精准选品。</p>
+                </div>
+
+                <div class="feature-card" data-animate style="animation-delay: 0.2s;">
+                    <div class="feature-icon"><i class="fas fa-search"></i></div>
+                    <h3>1688 以图搜货</h3>
+                    <p>Ozon商品一键识图溯源，快速匹配同源货源，自动比价分析，帮您找到优质低价供应商。</p>
+                </div>
+
+                <div class="feature-card" data-animate style="animation-delay: 0.3s;">
+                    <div class="feature-icon"><i class="fas fa-language"></i></div>
+                    <h3>俄文 AI 文案生成</h3>
+                    <p>自动生成符合Ozon平台规则的俄语标题、详情描述，省去人工翻译成本，大幅提升上架效率。</p>
+                </div>
+
+                <div class="feature-card" data-animate style="animation-delay: 0.4s;">
+                    <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>市场竞争分析</h3>
+                    <p>多维度竞品数据拆解，包含销量、价格、评价等关键指标，辅助制定精准的定价策略和运营方案。</p>
+                </div>
+
+                <div class="feature-card" data-animate style="animation-delay: 0.5s;">
+                    <div class="feature-icon"><i class="fas fa-cogs"></i></div>
+                    <h3>自动化批量处理</h3>
+                    <p>支持批量数据采集、、批量Listing生成，从选品-找货源-上架、一站式服务，解放双手，让AI为您创造更高价值。</p>
+                </div>
+
+                <div class="feature-card" data-animate style="animation-delay: 0.6s;">
+                    <div class="feature-icon"><i class="fas fa-laptop-code"></i></div>
+                    <h3>轻量化本地运行</h3>
+                    <p>客户端直接在电脑本地运行，无需复杂配置，无需云服务器，打开即可使用，稳定高效且安全。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 视频演示 -->
+    <section class="section demo-section" id="demo">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">VIDEO DEMONSTRATION</span>
+                <h2 class="section-title">视频<span>教程</span></h2>
+                <p class="section-subtitle">完整的操作指南，快速上手黑左AI</p>
+            </div>
+
+            <div class="demo-card" data-animate>
+                <!-- 标签页导航 -->
+                <div class="video-tabs">
+                    <button class="video-tab active" data-video="1">
+                        <span class="video-tab-number">1</span>
+                        注册与基础配置
+                    </button>
+                    <button class="video-tab" data-video="2">
+                        <span class="video-tab-number">2</span>
+                        选品规则
+                    </button>
+                    <button class="video-tab" data-video="3">
+                        <span class="video-tab-number">3</span>
+                        开始运行
+                    </button>
+                    <button class="video-tab" data-video="4">
+                        <span class="video-tab-number">4</span>
+                        一键上架
+                    </button>
+                </div>
+
+                <!-- 视频内容区域 -->
+                <div class="video-content active" id="video-1">
+                    <div class="video-container">
+                        <video 
+                            width="100%" 
+                            controls 
+                            controlslist="nodownload" 
+                            preload="metadata"
+                        >
+                            <source src="注册.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放，请升级浏览器
+                        </video>
+                    </div>
+                    <h3 class="video-title">第一步：注册与基础配置</h3>
+                    <p class="video-desc">学习如何注册账号、完成基础配置，为后续使用做好准备</p>
+                </div>
+
+                <div class="video-content" id="video-2">
+                    <div class="video-container">
+                        <video 
+                            width="100%" 
+                            controls 
+                            controlslist="nodownload" 
+                            preload="metadata"
+                        >
+                            <source src="选品规则.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放，请升级浏览器
+                        </video>
+                    </div>
+                    <h3 class="video-title">第二步：选品规则</h3>
+                    <p class="video-desc">了解如何设置选品规则，筛选出符合您需求的高潜力商品</p>
+                </div>
+
+                <div class="video-content" id="video-3">
+                    <div class="video-container">
+                        <video 
+                            width="100%" 
+                            controls 
+                            controlslist="nodownload" 
+                            preload="metadata"
+                        >
+                            <source src="开始运行.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放，请升级浏览器
+                        </video>
+                    </div>
+                    <h3 class="video-title">第三步：开始运行</h3>
+                    <p class="video-desc">学习如何启动选品任务，让AI为您自动挖掘爆款商品</p>
+                </div>
+
+                <div class="video-content" id="video-4">
+                    <div class="video-container">
+                        <video 
+                            width="100%" 
+                            controls 
+                            controlslist="nodownload" 
+                            preload="metadata"
+                        >
+                            <source src="一键上架.mp4" type="video/mp4">
+                            您的浏览器不支持视频播放，请升级浏览器
+                        </video>
+                    </div>
+                    <h3 class="video-title">第四步：一键上架</h3>
+                    <p class="video-desc">了解如何将选好的商品一键上架到Ozon平台，完成整个流程</p>
+                </div>
+
+                <!-- 额外视频区域 -->
+                <div class="extra-videos">
+                    <h4 class="extra-videos-title"><i class="fas fa-lightbulb"></i> 额外讲解视频</h4>
+                    <div class="extra-videos-grid">
+                        <div class="extra-video-card">
+                            <div class="extra-video-container">
+                                <video 
+                                    width="100%" 
+                                    controls 
+                                    controlslist="nodownload" 
+                                    preload="metadata"
+                                >
+                                    <source src="好品excel数据介绍.mp4" type="video/mp4">
+                                    您的浏览器不支持视频播放，请升级浏览器
+                                </video>
+                            </div>
+                            <h5 class="extra-video-title">好品Excel数据介绍</h5>
+                            <p class="extra-video-desc">详细讲解Excel数据表格的各项指标含义，帮助您更好地分析商品数据</p>
+                        </div>
+
+                        <div class="extra-video-card">
+                            <div class="extra-video-container">
+                                <video 
+                                    width="100%" 
+                                    controls 
+                                    controlslist="nodownload" 
+                                    preload="metadata"
+                                >
+                                    <source src="模型消费与充值.mp4" type="video/mp4">
+                                    您的浏览器不支持视频播放，请升级浏览器
+                                </video>
+                            </div>
+                            <h5 class="extra-video-title">模型消费与充值</h5>
+                            <p class="extra-video-desc">了解AI模型的消费计费规则以及如何进行充值操作</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 待开发功能预告 -->
+    <section class="section" id="upcoming">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">COMING SOON</span>
+                <h2 class="section-title">即将推出<span>新功能</span></h2>
+                <p class="section-subtitle">更多强大功能正在开发中，敬请期待</p>
+            </div>
+
+            <div class="demo-card" data-animate>
+                <div class="upcoming-feature">
+                    <div class="upcoming-badge">
+                        <i class="fas fa-rocket"></i>
+                        开发中
+                    </div>
+                    
+                    <h3 class="upcoming-title">后台店铺管理系统</h3>
+                    <p class="upcoming-subtitle">一站式多店铺利润核算与管理平台</p>
+
+                    <!-- 功能预览界面 -->
+                    <div class="preview-mockup">
+                        <div class="mockup-header">
+                            <div class="mockup-dots">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                            </div>
+                            <div class="mockup-title">
+                                <i class="fas fa-cube"></i>
+                                利润核算系统 · Profit Calculation System
+                            </div>
+                            <div class="mockup-status">
+                                <span class="status-badge">NO.1 (3912006)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mockup-body">
+                            <div class="mockup-sidebar">
+                                <div class="sidebar-item active">
+                                    <i class="fas fa-home"></i>
+                                    主页
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-file-import"></i>
+                                    订单录入
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-calculator"></i>
+                                    运费计算
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    出单后成本及利润
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-check-circle"></i>
+                                    已签收订单看板
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-times-circle"></i>
+                                    拒收看板
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-sliders-h"></i>
+                                    配置项
+                                </div>
+                                <div class="sidebar-item">
+                                    <i class="fas fa-store"></i>
+                                    绑定店铺
+                                </div>
+                            </div>
+                            
+                            <div class="mockup-content">
+                                <div class="content-tabs">
+                                    <div class="content-tab active">主页</div>
+                                    <div class="content-tab">订单录入</div>
+                                    <div class="content-tab">运费计算</div>
+                                    <div class="content-tab">出单后成本及利润</div>
+                                    <div class="content-tab">已签收订单看板</div>
+                                    <div class="content-tab">拒收看板</div>
+                                    <div class="content-tab">配置项</div>
+                                    <div class="content-tab">绑定店铺</div>
+                                </div>
+                                
+                                <div class="content-body">
+                                    <div class="finance-header">
+                                        <h4><i class="fas fa-chart-pie"></i> 财务中枢</h4>
+                                        <div class="finance-actions">
+                                            <span class="info-text">实时汇率：1 CNY = 11.1923 RUB</span>
+                                            <button class="btn-small refresh">
+                                                <i class="fas fa-sync-alt"></i> 刷新数据
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="stats-grid">
+                                        <div class="stat-card">
+                                            <div class="stat-label">累计录入订单的销售额</div>
+                                            <div class="stat-value sales">¥ 310.00</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-label">已签收订单实际利润</div>
+                                            <div class="stat-value profit">¥ 224.93</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-label">累计录入单量</div>
+                                            <div class="stat-value orders">1</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="dashboard-grid">
+                                        <div class="dashboard-card success">
+                                            <div class="card-header">
+                                                <i class="fas fa-check-circle"></i>
+                                                <span>已签收结算</span>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <span>签收总单量</span>
+                                                    <span>2 笔</span>
+                                                </div>
+                                                <div class="row">
+                                                    <span>退/商/部分赔偿单数</span>
+                                                    <span>0 笔</span>
+                                                </div>
+                                                <div class="row highlight">
+                                                    <span>已签收订单利润</span>
+                                                    <span>¥ 224.93</span>
+                                                </div>
+                                                <div class="row">
+                                                    <span>未采购金额订单</span>
+                                                    <span class="badge-small">2 笔</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="dashboard-card warning">
+                                            <div class="card-header">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                                <span>异常签收单</span>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <span>拒收总单量</span>
+                                                    <span>4 笔</span>
+                                                </div>
+                                                <div class="row highlight">
+                                                    <span>拒收亏损金额</span>
+                                                    <span>¥ 0.00</span>
+                                                </div>
+                                                <div class="row">
+                                                    <span>未采购金额订单</span>
+                                                    <span class="badge-small warning">4 笔</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="dashboard-card info">
+                                            <div class="card-header">
+                                                <i class="fas fa-desktop"></i>
+                                                <span>出单后成本及利润看板</span>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <span>总成本 (采购+损耗)</span>
+                                                    <span class="text-blue">¥ 18.00</span>
+                                                </div>
+                                                <div class="row">
+                                                    <span>出单后录入利润之和</span>
+                                                    <span>¥ 175.34</span>
+                                                </div>
+                                                <div class="row">
+                                                    <span>统计范围：共 2 店，本次 2 店，</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 功能亮点 -->
+                    <div class="feature-highlights">
+                        <div class="highlight-item">
+                            <div class="highlight-icon">
+                                <i class="fas fa-store-alt"></i>
+                            </div>
+                            <h4>多店铺统一管理</h4>
+                            <p>支持绑定多个Ozon店铺，一站式查看所有店铺数据</p>
+                        </div>
+                        <div class="highlight-item">
+                            <div class="highlight-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h4>智能利润核算</h4>
+                            <p>自动计算每笔订单的实际利润，精准分析盈亏</p>
+                        </div>
+                        <div class="highlight-item">
+                            <div class="highlight-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h4>数据可视化看板</h4>
+                            <p>直观的图表展示，快速掌握店铺经营状况</p>
+                        </div>
+                        <div class="highlight-item">
+                            <div class="highlight-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <h4>异常订单提醒</h4>
+                            <p>及时发现并处理拒收、退款等异常订单</p>
+                        </div>
+                    </div>
+
+                    <div class="upcoming-cta">
+                        <p class="cta-text">想要第一时间体验新功能？</p>
+                        <a href="#contact" class="btn-primary">
+                            <i class="fas fa-envelope"></i>
+                            预约内测资格
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 联系我们 -->
+    <section class="section contact-section" id="contact">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-label">CONTACT US</span>
+                <h2 class="section-title">联系<span>我们</span></h2>
+                <p class="section-subtitle">期待与您合作，共同打造跨境电商新时代</p>
+            </div>
+
+            <div class="contact-card" data-animate>
+                <div class="contact-header">
+                    <p class="contact-title">工具咨询 · 试用体验 · 功能定制</p>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fab fa-weixin"></i></div>
+                    <div class="contact-info">
+                        <div class="contact-label">微信咨询</div>
+                        <div class="contact-value">Hazel_20260502</div>
+                    </div>
+                </div>
+
+                <div class="qr-code-container">
+                    <div class="qr-code-wrapper">
+                        <img src="客服二维码.jpg" alt="客服二维码" class="qr-code-image">
+                    </div>
+                    <p class="qr-code-hint">扫码添加客服微信</p>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fas fa-envelope"></i></div>
+                    <div class="contact-info">
+                        <div class="contact-label">合作邮箱</div>
+                        <div class="contact-value">15221172482@163.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 底部 -->
+    <footer>
+        <div class="container">
+            <p>© 2026 黑左AI · Ozon跨境智能选品平台 · All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        // 鼠标跟随光斑
+        const cursorGlow = document.getElementById('cursor-glow');
+        
+        document.addEventListener('mousemove', (e) => {
+            cursorGlow.style.left = e.clientX + 'px';
+            cursorGlow.style.top = e.clientY + 'px';
+        });
+
+        // 粒子系统
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = Math.random() * 2 + 1;
+                this.opacity = Math.random() * 0.5 + 0.2;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+
+            update(time) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.pulsePhase += 0.02;
+
+                // 鼠标吸引效果
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 150) {
+                    this.vx += dx * 0.0005;
+                    this.vy += dy * 0.0005;
+                }
+
+                // 边界反弹
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                // 速度限制
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+            }
+
+            draw(time) {
+                const pulseOpacity = this.opacity + Math.sin(this.pulsePhase) * 0.15;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 212, 255, ${pulseOpacity})`;
+                ctx.fill();
+                
+                // 发光效果
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 212, 255, ${pulseOpacity * 0.3})`;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 80; i++) {
+            particles.push(new Particle());
+        }
+
+        // 绘制粒子连线
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 120) {
+                        const opacity = (1 - distance / 120) * 0.25;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(0, 212, 255, ${opacity})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // 动画循环
+        let lastTime = 0;
+        function animate(time) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(p => {
+                p.update(time);
+                p.draw(time);
+            });
+            
+            drawConnections();
+            requestAnimationFrame(animate);
+        }
+        animate(0);
+
+        // 鼠标移动跟踪
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // 导航栏滚动效果
+        const header = document.getElementById('header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // 视差滚动动画
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // 观察所有需要动画的元素
+        document.querySelectorAll('[data-animate]').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 观察 section-header
+        document.querySelectorAll('.section-header').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 观察 stat-item
+        document.querySelectorAll('.stat-item').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 观察 feature-card
+        document.querySelectorAll('.feature-card').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 视频标签页切换
+        const videoTabs = document.querySelectorAll('.video-tab');
+        const videoContents = document.querySelectorAll('.video-content');
+
+        videoTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const videoId = tab.getAttribute('data-video');
+                
+                // 移除所有标签页的active类
+                videoTabs.forEach(t => t.classList.remove('active'));
+                // 移除所有内容的active类
+                videoContents.forEach(c => c.classList.remove('active'));
+                
+                // 给当前标签页和对应内容添加active类
+                tab.classList.add('active');
+                document.getElementById('video-' + videoId).classList.add('active');
+                
+                // 暂停其他视频的播放
+                videoContents.forEach(content => {
+                    const video = content.querySelector('video');
+                    if (video && !content.classList.contains('active')) {
+                        video.pause();
+                    }
+                });
+            });
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
