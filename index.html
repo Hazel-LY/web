@@ -1507,6 +1507,295 @@
             margin: 0;
         }
 
+        /* 首屏价格展示 */
+        .hero-pricing {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(139, 92, 246, 0.15));
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            border-radius: 24px;
+            padding: 40px;
+            margin: 40px 0;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: fadeUp 0.8s ease forwards 0.8s;
+        }
+
+        .hero-pricing::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            animation: rotateGlow 8s linear infinite;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hero-pricing-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .hero-pricing-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444, #f59e0b);
+            background-size: 200% 200%;
+            border-radius: 50px;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: white;
+            margin-bottom: 24px;
+            animation: gradientShift 3s ease infinite, pulse-glow 2s ease-in-out infinite;
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.5);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero-price-main {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .hero-price-yuan {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--ice-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-price-number {
+            font-size: 96px;
+            font-weight: 900;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--ice-blue), var(--deep-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 60px rgba(0, 212, 255, 0.5);
+            line-height: 1;
+            position: relative;
+        }
+
+        .hero-price-number::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--cyber-blue), transparent);
+            border-radius: 2px;
+        }
+
+        .hero-price-month {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .hero-price-tagline {
+            font-size: 22px;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .hero-price-benefits {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+
+        .hero-benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .hero-benefit-icon {
+            color: #22c55e;
+            font-size: 18px;
+        }
+
+        .hero-price-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 48px;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        /* 价格部分 */
+        .pricing-section {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(139, 92, 246, 0.05));
+        }
+
+        .pricing-card {
+            background: var(--card-bg);
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            padding: 60px;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(40px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            animation: badgeShine 4s linear infinite;
+        }
+
+        .pricing-card.visible {
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        .pricing-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            border-radius: 30px;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: white;
+            margin-bottom: 30px;
+            animation: pulse-glow 2s ease-in-out infinite;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+        }
+
+        .price-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .current-price {
+            font-size: 72px;
+            font-weight: 900;
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(135deg, var(--cyber-blue), var(--deep-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(0, 212, 255, 0.3);
+            position: relative;
+        }
+
+        .current-price .yuan {
+            font-size: 36px;
+        }
+
+        .current-price .per-month {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .lifetime-guarantee {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(0, 212, 255, 0.2));
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            border-radius: 12px;
+            color: #22c55e;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .pricing-description {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+
+        .qr-codes-grid {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-top: 32px;
+        }
+
+        .qr-code-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            flex: 0 0 auto;
+        }
+
+        .qr-code-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--cyber-blue);
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.15);
+        }
+
+        .qr-code-card .qr-code-wrapper {
+            width: 140px;
+            height: 140px;
+        }
+
+        .qr-code-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 12px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        .qr-code-card-3 {
+            transform: translateY(-8px);
+        }
+
         /* 底部 */
         footer {
             border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1639,6 +1928,67 @@
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
+
+            .hero-pricing {
+                padding: 28px 20px;
+            }
+
+            .hero-pricing-badge {
+                font-size: 12px;
+                padding: 8px 20px;
+                letter-spacing: 2px;
+            }
+
+            .hero-price-main {
+                gap: 6px;
+            }
+
+            .hero-price-yuan {
+                font-size: 32px;
+            }
+
+            .hero-price-number {
+                font-size: 64px;
+            }
+
+            .hero-price-month {
+                font-size: 20px;
+            }
+
+            .hero-price-tagline {
+                font-size: 16px;
+            }
+
+            .hero-price-benefits {
+                gap: 16px;
+            }
+
+            .hero-benefit-item {
+                font-size: 13px;
+            }
+
+            .hero-price-cta {
+                padding: 14px 32px;
+                font-size: 15px;
+            }
+
+            .qr-codes-grid {
+                gap: 16px;
+            }
+
+            .qr-code-card {
+                padding: 16px;
+            }
+
+            .qr-code-card .qr-code-wrapper {
+                width: 120px;
+                height: 120px;
+            }
+
+            .qr-code-card-title {
+                font-size: 13px;
+                margin-top: 10px;
+            }
         }
     </style>
 </head>
@@ -1724,8 +2074,50 @@
                     </div>
                 </div>
 
+                <!-- 首屏价格展示 -->
+                <div class="hero-pricing">
+                    <div class="hero-pricing-content">
+                        <div class="hero-pricing-badge">
+                            <i class="fas fa-crown"></i>
+                            官方统一定价
+                        </div>
+
+                        <div class="hero-price-main">
+                            <span class="hero-price-yuan">¥</span>
+                            <span class="hero-price-number">2300</span>
+                            <span class="hero-price-month">/月</span>
+                        </div>
+
+                        <p class="hero-price-tagline">让AI为您创造数倍以上的价值回报</p>
+
+                        <div class="hero-price-benefits">
+                            <div class="hero-benefit-item">
+                                <i class="fas fa-check-circle hero-benefit-icon"></i>
+                                <span>独家量化AI选品</span>
+                            </div>
+                            <div class="hero-benefit-item">
+                                <i class="fas fa-check-circle hero-benefit-icon"></i>
+                                <span>1688货源匹配</span>
+                            </div>
+                            <div class="hero-benefit-item">
+                                <i class="fas fa-check-circle hero-benefit-icon"></i>
+                                <span>OZON市场专营</span>
+                            </div>
+                            <div class="hero-benefit-item">
+                                <i class="fas fa-check-circle hero-benefit-icon"></i>
+                                <span>全程技术支持</span>
+                            </div>
+                        </div>
+
+                        <a href="#contact" class="btn-primary hero-price-cta">
+                            <i class="fas fa-rocket"></i>
+                            立即抢购 · 开启致富之路
+                        </a>
+                    </div>
+                </div>
+
                 <!-- 预约提示 -->
-                <div class="promo-banner" style="animation-delay: 1.4s;">
+                <div class="promo-banner" style="animation-delay: 1.6s;">
                     <div class="promo-badge"><i class="fas fa-gift"></i> 限时福利</div>
                     <p class="promo-text">现在预约可享受全自动化为您上架100个好品，体验名额有限，请联系客服领取</p>
                     <a href="#contact" class="promo-btn">立即预约</a>
@@ -2176,19 +2568,35 @@
                     <p class="contact-title">工具咨询 · 试用体验 · 功能定制</p>
                 </div>
 
+                <div class="qr-codes-grid">
+                    <div class="qr-code-card">
+                        <div class="qr-code-wrapper">
+                            <img src="客服1号二维码.jpg" alt="客服1号二维码" class="qr-code-image">
+                        </div>
+                        <p class="qr-code-card-title">客服 1号</p>
+                    </div>
+
+                    <div class="qr-code-card">
+                        <div class="qr-code-wrapper">
+                            <img src="客服2号二维码.jpg" alt="客服2号二维码" class="qr-code-image">
+                        </div>
+                        <p class="qr-code-card-title">客服 2号</p>
+                    </div>
+
+                    <div class="qr-code-card qr-code-card-3">
+                        <div class="qr-code-wrapper">
+                            <img src="客服3号二维码.jpg" alt="客服3号二维码" class="qr-code-image">
+                        </div>
+                        <p class="qr-code-card-title">客服 3号</p>
+                    </div>
+                </div>
+
                 <div class="contact-item">
                     <div class="contact-icon"><i class="fab fa-weixin"></i></div>
                     <div class="contact-info">
                         <div class="contact-label">微信咨询</div>
                         <div class="contact-value">Hazel_20260502</div>
                     </div>
-                </div>
-
-                <div class="qr-code-container">
-                    <div class="qr-code-wrapper">
-                        <img src="客服二维码.jpg" alt="客服二维码" class="qr-code-image">
-                    </div>
-                    <p class="qr-code-hint">扫码添加客服微信</p>
                 </div>
 
                 <div class="contact-item">
